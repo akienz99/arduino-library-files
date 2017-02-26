@@ -21,6 +21,13 @@ If you want to create tags for additional libraries, just copy them into the
 `libraries` folder of this repository before execution of the `arduino-ctags`
 command. Then they will be included automatically.
 
+## Note on the WiFi library
+
+Due to the big size and contents of the WiFi library, it removed from the
+repository. This helps to keep file size reasonable. If you want to use WiFi 
+capabilites, move the `WiFi` folder from your Arduino projects folder to 
+`libraries`
+
 ## Licence note
 
 These libraries are licenced under the GNU LGPL Version 2. A copy of that can be
