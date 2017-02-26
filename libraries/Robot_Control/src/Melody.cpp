@@ -1,3 +1,21 @@
+/*
+  Copyright (c) 2012 Arduino LLC. All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+*/
+
 #include "ArduinoRobot.h"
 #include "SquawkSD.h"
 #include "Fat16.h"
@@ -40,7 +58,7 @@ void RobotControl::playMelody(char* script){
       case 'C': playNote(202, time, modifier); break; // Play a  C#
       case 'd': playNote(190, time, modifier); break; // Play a  D
       case 'D': playNote(180, time, modifier); break; // Play a  D#
-      case 'e': playNote(170, time, modifier); break; // Play an F
+      case 'e': playNote(170, time, modifier); break; // Play an E
       case 'f': playNote(160, time, modifier); break; // Play an F
       case 'F': playNote(151, time, modifier); break; // Play an F#
       case 'g': playNote(143, time, modifier); break; // Play a  G
