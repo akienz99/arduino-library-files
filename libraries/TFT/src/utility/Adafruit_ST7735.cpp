@@ -30,7 +30,8 @@ inline uint16_t swapcolor(uint16_t x) {
 
 // Constructor when using software SPI.  All output pins are configurable.
 Adafruit_ST7735::Adafruit_ST7735(uint8_t cs, uint8_t rs, uint8_t sid,
- uint8_t sclk, uint8_t rst) {
+ uint8_t sclk, uint8_t rst) : Adafruit_GFX(ST7735_TFTWIDTH, ST7735_TFTHEIGHT) 
+{
   _cs   = cs;
   _rs   = rs;
   _sid  = sid;
@@ -42,7 +43,9 @@ Adafruit_ST7735::Adafruit_ST7735(uint8_t cs, uint8_t rs, uint8_t sid,
 
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
-Adafruit_ST7735::Adafruit_ST7735(uint8_t cs, uint8_t rs, uint8_t rst) {
+Adafruit_ST7735::Adafruit_ST7735(uint8_t cs, uint8_t rs, uint8_t rst) : 
+Adafruit_GFX(ST7735_TFTWIDTH, ST7735_TFTHEIGHT) 
+{
   _cs   = cs;
   _rs   = rs;
   _rst  = rst;
@@ -70,25 +73,47 @@ inline void Adafruit_ST7735::spiwrite(uint8_t c) {
 
 
 void Adafruit_ST7735::writecommand(uint8_t c) {
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, LOW);
+#else
   *rsport &= ~rspinmask;
+#endif
   *csport &= ~cspinmask;
 
   //Serial.print("C ");
   spiwrite(c);
 
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 
 void Adafruit_ST7735::writedata(uint8_t c) {
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
     
   //Serial.print("D ");
   spiwrite(c);
 
   *csport |= cspinmask;
-} 
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
+}
 
 
 // Rather than a bazillion writecommand() and writedata() calls, screen
@@ -97,7 +122,7 @@ void Adafruit_ST7735::writedata(uint8_t c) {
 // formatting -- storage-wise this is hundreds of bytes more compact
 // than the equivalent code.  Companion function follows.
 #define DELAY 0x80
-PROGMEM static prog_uchar
+PROGMEM const static unsigned char
   Bcmd[] = {                  // Initialization commands for 7735B screens
     18,                       // 18 commands in list:
     ST7735_SWRESET,   DELAY,  //  1: Software reset, no args, w/delay
@@ -226,12 +251,71 @@ PROGMEM static prog_uchar
     ST7735_NORON  ,    DELAY, //  3: Normal display on, no args, w/delay
       10,                     //     10 ms delay
     ST7735_DISPON ,    DELAY, //  4: Main screen turn on, no args w/delay
-      100 };                  //     100 ms delay
+      100 },                  //     100 ms delay
+  Gcmd[] = {                  // Initialization commands for 7735B screens
+    19,                       // 18 commands in list:
+    ST7735_SWRESET,   DELAY,  //  1: Software reset, no args, w/delay
+      50,                     //     50 ms delay
+    ST7735_SLPOUT ,   DELAY,  //  2: Out of sleep mode, no args, w/delay
+      100,                    //     255 = 500 ms delay
+    0x26 , 1,  			// 3: Set default gamma
+      0x04,                     //     16-bit color
+    0xb1, 2,              	// 4: Frame Rate
+      0x0b,
+      0x14,
+    0xc0, 2,                    // 5: VRH1[4:0] & VC[2:0]
+      0x08,
+      0x00,
+    0xc1, 1,                    // 6: BT[2:0]
+      0x05,
+    0xc5, 2,                    // 7: VMH[6:0] & VML[6:0]
+      0x41,
+      0x30,
+    0xc7, 1,                    // 8: LCD Driving control
+      0xc1,
+    0xEC, 1,                    // 9: Set pumping color freq
+      0x1b,
+    0x3a , 1 + DELAY,  	        // 10: Set color format
+      0x55,                     //     16-bit color
+      100,
+    0x2a, 4,                    // 11: Set Column Address
+      0x00,
+      0x00,
+      0x00,
+      0x7f,
+    0x2b, 4,                    // 12: Set Page Address
+      0x00,
+      0x00,
+      0x00,
+      0x9f,
+    0x36, 1,                    // 12+1: Set Scanning Direction
+      0xc8,
+    0xb7, 1,			// 14: Set Source Output Direciton
+      0x00,
+    0xf2, 1,			// 15: Enable Gamma bit
+      0x00,
+    0xe0, 15 + DELAY,		// 16: magic
+      0x28, 0x24, 0x22, 0x31,
+      0x2b, 0x0e, 0x53, 0xa5,
+      0x42, 0x16, 0x18, 0x12,
+      0x1a, 0x14, 0x03,
+      50,
+    0xe1, 15 + DELAY,		// 17: more magic
+      0x17, 0x1b, 0x1d, 0x0e,
+      0x14, 0x11, 0x2c, 0xa5,
+      0x3d, 0x09, 0x27, 0x2d,
+      0x25, 0x2b, 0x3c, 
+      50, 
+    ST7735_NORON  ,   DELAY,  // 17: Normal display on, no args, w/delay
+      10,                     //     10 ms delay
+    ST7735_DISPON ,   DELAY,  // 18: Main screen turn on, no args, w/delay
+      255 };                  //     255 = 500 ms delay
+
 
 
 // Companion code to the above tables.  Reads and issues
 // a series of LCD commands stored in PROGMEM byte array.
-void Adafruit_ST7735::commandList(uint8_t *addr) {
+void Adafruit_ST7735::commandList(const uint8_t *addr) {
 
   uint8_t  numCommands, numArgs;
   uint16_t ms;
@@ -256,9 +340,8 @@ void Adafruit_ST7735::commandList(uint8_t *addr) {
 
 
 // Initialization code common to both 'B' and 'R' type displays
-void Adafruit_ST7735::commonInit(uint8_t *cmdList) {
+void Adafruit_ST7735::commonInit(const uint8_t *cmdList) {
 
-  constructor(ST7735_TFTWIDTH, ST7735_TFTHEIGHT);
   colstart  = rowstart = 0; // May be overridden in init func
 
   pinMode(_rs, OUTPUT);
@@ -270,6 +353,9 @@ void Adafruit_ST7735::commonInit(uint8_t *cmdList) {
 
   if(hwSPI) { // Using hardware SPI
     SPI.begin();
+#ifdef SPI_HAS_TRANSACTION
+    spisettings = SPISettings(4000000L, MSBFIRST, SPI_MODE0);
+#else
 #if defined(ARDUINO_ARCH_SAM)
     SPI.setClockDivider(24); // 4 MHz (half speed)
 #else
@@ -277,6 +363,7 @@ void Adafruit_ST7735::commonInit(uint8_t *cmdList) {
 #endif
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE0);
+#endif // SPI_HAS_TRANSACTION
   } else {
     pinMode(_sclk, OUTPUT);
     pinMode(_sid , OUTPUT);
@@ -307,6 +394,12 @@ void Adafruit_ST7735::commonInit(uint8_t *cmdList) {
 // Initialization for ST7735B screens
 void Adafruit_ST7735::initB(void) {
   commonInit(Bcmd);
+}
+
+
+// Initialization for ST7735B screens
+void Adafruit_ST7735::initG(void) {
+  commonInit(Gcmd);
 }
 
 
@@ -346,7 +439,15 @@ void Adafruit_ST7735::setAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1,
 
 
 void Adafruit_ST7735::pushColor(uint16_t color) {
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
 
   if (tabcolor == INITR_BLACKTAB)   color = swapcolor(color);
@@ -354,6 +455,9 @@ void Adafruit_ST7735::pushColor(uint16_t color) {
   spiwrite(color);
 
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 void Adafruit_ST7735::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -362,7 +466,15 @@ void Adafruit_ST7735::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
   setAddrWindow(x,y,x+1,y+1);
 
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
 
   if (tabcolor == INITR_BLACKTAB)   color = swapcolor(color);
@@ -371,6 +483,9 @@ void Adafruit_ST7735::drawPixel(int16_t x, int16_t y, uint16_t color) {
   spiwrite(color);
 
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 
@@ -385,13 +500,24 @@ void Adafruit_ST7735::drawFastVLine(int16_t x, int16_t y, int16_t h,
   if (tabcolor == INITR_BLACKTAB)   color = swapcolor(color);
 
   uint8_t hi = color >> 8, lo = color;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
   while (h--) {
     spiwrite(hi);
     spiwrite(lo);
   }
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 
@@ -406,13 +532,24 @@ void Adafruit_ST7735::drawFastHLine(int16_t x, int16_t y, int16_t w,
   if (tabcolor == INITR_BLACKTAB)   color = swapcolor(color);
 
   uint8_t hi = color >> 8, lo = color;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
   while (w--) {
     spiwrite(hi);
     spiwrite(lo);
   }
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 
@@ -437,7 +574,15 @@ void Adafruit_ST7735::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   setAddrWindow(x, y, x+w-1, y+h-1);
 
   uint8_t hi = color >> 8, lo = color;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.beginTransaction(spisettings);
+#endif
+
+#ifdef __ARDUINO_ARC__
+  digitalWrite(_rs, HIGH);
+#else
   *rsport |=  rspinmask;
+#endif
   *csport &= ~cspinmask;
   for(y=h; y>0; y--) {
     for(x=w; x>0; x--) {
@@ -447,6 +592,9 @@ void Adafruit_ST7735::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   }
 
   *csport |= cspinmask;
+#ifdef SPI_HAS_TRANSACTION
+  if (hwSPI) SPI.endTransaction();
+#endif
 }
 
 

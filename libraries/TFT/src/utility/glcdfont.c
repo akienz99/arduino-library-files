@@ -1,4 +1,4 @@
-#ifndef ARDUINO_ARCH_SAM
+#if !defined(ARDUINO_ARCH_SAM) && !defined(__ARDUINO_ARC__)
 #include <avr/io.h>
 #endif
 #include <avr/pgmspace.h> 
@@ -8,7 +8,7 @@
 
 // standard ascii 5x7 font
 
-static unsigned char  font[] PROGMEM = {
+static const unsigned char  font[] PROGMEM = {
         0x00, 0x00, 0x00, 0x00, 0x00,   
 	0x3E, 0x5B, 0x4F, 0x5B, 0x3E, 	
 	0x3E, 0x6B, 0x4F, 0x6B, 0x3E, 	
