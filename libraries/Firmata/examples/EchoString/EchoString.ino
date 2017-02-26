@@ -3,7 +3,7 @@
  * from software on a host computer. It is intended to work with
  * any host computer software package.
  *
- * To download a host software package, please clink on the following link
+ * To download a host software package, please click on the following link
  * to open the download page in your default browser.
  *
  * http://firmata.org/wiki/Download
@@ -15,32 +15,30 @@
  */
 #include <Firmata.h>
 
-byte analogPin;
-
 void stringCallback(char *myString)
 {
-    Firmata.sendString(myString);
+  Firmata.sendString(myString);
 }
 
 
-void sysexCallback(byte command, byte argc, byte*argv)
+void sysexCallback(byte command, byte argc, byte *argv)
 {
-    Firmata.sendSysex(command, argc, argv);
+  Firmata.sendSysex(command, argc, argv);
 }
 
 void setup()
 {
-    Firmata.setFirmwareVersion(0, 1);
-    Firmata.attach(STRING_DATA, stringCallback);
-    Firmata.attach(START_SYSEX, sysexCallback);
-    Firmata.begin(57600);
+  Firmata.setFirmwareVersion(FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
+  Firmata.attach(STRING_DATA, stringCallback);
+  Firmata.attach(START_SYSEX, sysexCallback);
+  Firmata.begin(57600);
 }
 
 void loop()
 {
-    while(Firmata.available()) {
-        Firmata.processInput();
-    }
+  while (Firmata.available()) {
+    Firmata.processInput();
+  }
 }
 
 
