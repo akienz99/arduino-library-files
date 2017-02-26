@@ -1,8 +1,8 @@
 # Standard Arduino libraries for Ctags
 
 This repository contains a copy of the standard Arduino libraries. This is useful
-for creating Ctag-files because you normally cannot access the built-in libraries
-like Wire.h for that matter.
+for creating Ctag-files because you normally cannot access some of these built-in 
+libraries like Wire.h.
 
 **Important:** Do not use these Libraries for your Arduino sketches, as they
 might be outdated or even incompatible with current versions of the Arduino
@@ -30,5 +30,5 @@ capabilites, move the `WiFi` folder from your Arduino projects folder to
 
 ## Licence note
 
-These libraries are licenced under the GNU LGPL Version 2. A copy of that can be
+These libraries are licensed under the GNU LGPL Version 2. A copy of that can be
 found in the LICENSE file.
