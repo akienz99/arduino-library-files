@@ -1,12 +1,8 @@
-# Standard Arduino libraries for Ctags
+# Standard Arduino libraries
 
 This repository contains a copy of the standard Arduino libraries. This is useful
 for creating Ctag-files because you normally cannot access some of these built-in 
-libraries like Wire.h.
-
-**Important:** Do not use these Libraries for your Arduino sketches, as they
-might be outdated or even incompatible with current versions of the Arduino
-compiler.
+libraries like Wire.h or the default Arduino library.
 
 ## Generating a tagfile
 
